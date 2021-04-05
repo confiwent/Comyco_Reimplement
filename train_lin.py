@@ -17,16 +17,17 @@ LR_RATE = 1e-4
 DEFAULT_QUALITY = 1
 VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
 MODEL_TEST_INTERVAL = 10
-
+QOE_METRIC = 'lin'
 REBUF_PENALTY = 4.3
 SMOOTH_PENALTY = 1
-MPC_FUTURE_CHUNK_COUNT = 5
+MPC_FUTURE_CHUNK_COUNT = 7
 
 RANDOM_SEED = 42
 BUFFER_NORM_FACTOR = 10.0
 M_IN_K = 1000.0
 RAND_RANGE = 1000
-TRAIN_TRACES = './cooked_traces/' #_test
+TRAIN_TRACES = './bwsets/all/test_traces/' #_test
+# TRAIN_TRACES = './cooked_test_traces/' #_test
 LOG_FILE = './results/'
 TEST_LOG_FOLDER = './test_results/'
 
@@ -68,7 +69,7 @@ def loopmain(sess, actor):
         time_stamp = 0
         sess.run(tf.global_variables_initializer())
         
-        saver = tf.train.Saver(max_to_keep=100000)
+        saver = tf.train.Saver(max_to_keep=1000)
         epoch = 0
         while True:
             delay, sleep_time, buffer_size, rebuf, \
@@ -115,7 +116,7 @@ def loopmain(sess, actor):
                 future_horizon = CHUNK_TIL_VIDEO_END_CAP - 1 - last_index
             start_buffer = buffer_size
 
-            action_real = solving_log_true_bw(start_buffer, int(last_bit_rate), int(future_horizon), net_env)
+            action_real = solving_log_true_bw(start_buffer, int(last_bit_rate), int(future_horizon), net_env, REBUF_PENALTY, SMOOTH_PENALTY, QOE_METRIC)
             # action_real = int(net_env.optimal)
 
             action_vec = np.zeros(A_DIM)
@@ -171,8 +172,9 @@ def loopmain(sess, actor):
 
                 epoch += 1
                 if epoch % MODEL_TEST_INTERVAL == 0:
-                    actor.save('models/nn_model_ep_' + \
-                        str(epoch) + '.ckpt')
+                    # actor.save('models/nn_model_ep_' + \
+                    #     str(epoch) + '.ckpt')
+                    saver.save(sess, 'models/nn_model_ep_' + str(epoch) + '.ckpt')
                     os.system('python rl_test_lin.py ' + 'models/nn_model_ep_' + \
                         str(epoch) + '.ckpt')
                     # os.system('python plot_results.py >> results.log')

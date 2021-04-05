@@ -7,13 +7,9 @@ import numpy as np
 MAX_REWARD = -10000000000
 A_DIM = 6
 VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
-QOE_METRIC = 'lin'
-REBUFF_PENALTY_LIN = 4.3
-REBUFF_PENALTY_LOG = 2.66
-SMOOTH_PENALTY = 1
 
 
-def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_length, rebuf_penalty, smooth_penalty):
+def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_length, rebuf_penalty, smooth_penalty, qoe_metric):
     max_reward = MAX_REWARD
     reward_comparison = False
     send_data = 0
@@ -39,7 +35,7 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
             # reward
             # bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
             # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
-            if QOE_METRIC == 'log':
+            if qoe_metric == 'log':
                 rebuf_penalty = REBUFF_PENALTY_LOG
                 bitrate_sum = np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0]))
                 # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
@@ -69,7 +65,7 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
 
             # criterion terms
             # theta = SMOOTH_PENALTY * (VIDEO_BIT_RATE[action+1]/1000. - VIDEO_BIT_RATE[action]/1000.)
-            if QOE_METRIC == 'log':
+            if qoe_metric == 'log':
                 rebuffer_term = rebuf_penalty * (max(download_time_every_step[position][action+1] - parent[1], 0) - max(download_time_every_step[position][action] - parent[1], 0))
                 if (action + 1 <= parent[-1]):
                     High_Maybe_Superior = ((1.0 + 2 * rebuf_penalty) * (
@@ -107,8 +103,8 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
                 # reward
                 # bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
                 # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
-                if QOE_METRIC == 'log':
-                    rebuf_penalty = REBUFF_PENALTY_LOG
+                if qoe_metric == 'log':
+                    # rebuf_penalty = REBUFF_PENALTY_LOG
                     bitrate_sum = np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0]))
                     # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                     smoothness_diffs = abs(np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0])) - np.log(
@@ -116,7 +112,7 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
                     reward = bitrate_sum - (rebuf_penalty * curr_rebuffer_time) - (
                             SMOOTH_PENALTY * smoothness_diffs)
                 else:
-                    rebuf_penalty = REBUFF_PENALTY_LIN
+                    # rebuf_penalty = REBUFF_PENALTY_LIN
                     bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
                     smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                     reward = (bitrate_sum / 1000.) - (rebuf_penalty * curr_rebuffer_time) - (
@@ -140,7 +136,7 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
                     break
                 # criterion terms
                 # theta = SMOOTH_PENALTY * (VIDEO_BIT_RATE[action+1]/1000. - VIDEO_BIT_RATE[action]/1000.)
-                if QOE_METRIC == 'log':
+                if qoe_metric == 'log':
                     rebuffer_term = rebuf_penalty * (max(download_time_every_step[position][action+1] - parent[1], 0) - max(download_time_every_step[position][action] - parent[1], 0))
                     if (action + 1 <= parent[-1]):
                         High_Maybe_Superior = ((1.0 + 2 * rebuf_penalty) * (
@@ -162,7 +158,7 @@ def solving_log(download_time_every_step, start_buffer, bit_rate, future_chunk_l
     return send_data
 
 
-def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env):
+def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env, rebuf_penalty, smooth_penalty, qoe_metric):
     max_reward = MAX_REWARD
     reward_comparison = False
     send_data = 0
@@ -196,20 +192,20 @@ def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env):
             # reward
             # bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
             # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
-            if QOE_METRIC == 'log':
-                rebuf_penalty = REBUFF_PENALTY_LOG
+            if qoe_metric == 'log':
+                # rebuf_penalty = REBUFF_PENALTY_LOG
                 bitrate_sum = np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0]))
                 # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                 smoothness_diffs = abs(np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0])) - np.log(
                     VIDEO_BIT_RATE[last_quality] / float(VIDEO_BIT_RATE[0])))
                 reward = bitrate_sum - (rebuf_penalty * curr_rebuffer_time) - (
-                        SMOOTH_PENALTY * smoothness_diffs)
+                        smooth_penalty * smoothness_diffs)
             else:
-                rebuf_penalty = REBUFF_PENALTY_LIN
+                # rebuf_penalty = REBUFF_PENALTY_LIN
                 bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
                 smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                 reward = (bitrate_sum / 1000.) - (rebuf_penalty * curr_rebuffer_time) - (
-                        SMOOTH_PENALTY * smoothness_diffs / 1000.)
+                        smooth_penalty * smoothness_diffs / 1000.)
             reward += parent[0]
 
             children = parent[:]
@@ -230,7 +226,7 @@ def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env):
 
             # criterion terms
             # theta = SMOOTH_PENALTY * (VIDEO_BIT_RATE[action+1]/1000. - VIDEO_BIT_RATE[action]/1000.)
-            if QOE_METRIC == 'log':
+            if qoe_metric == 'log':
                 rebuffer_term = rebuf_penalty * (
                         max(download_time_next - parent[5], 0) - max(download_time - parent[5], 0))
                 if (action + 1 <= parent[-1]):
@@ -277,20 +273,20 @@ def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env):
                 # reward
                 # bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
                 # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
-                if QOE_METRIC == 'log':
-                    rebuf_penalty = REBUFF_PENALTY_LOG
+                if qoe_metric == 'log':
+                    # rebuf_penalty = REBUFF_PENALTY_LOG
                     bitrate_sum = np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0]))
                     # smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                     smoothness_diffs = abs(np.log(VIDEO_BIT_RATE[chunk_quality] / float(VIDEO_BIT_RATE[0])) - np.log(
                         VIDEO_BIT_RATE[last_quality] / float(VIDEO_BIT_RATE[0])))
                     reward = bitrate_sum - (rebuf_penalty * curr_rebuffer_time) - (
-                            SMOOTH_PENALTY * smoothness_diffs)
+                            smooth_penalty * smoothness_diffs)
                 else:
-                    rebuf_penalty = REBUFF_PENALTY_LIN
+                    # rebuf_penalty = REBUFF_PENALTY_LIN
                     bitrate_sum = VIDEO_BIT_RATE[chunk_quality]
                     smoothness_diffs = abs(VIDEO_BIT_RATE[chunk_quality] - VIDEO_BIT_RATE[last_quality])
                     reward = (bitrate_sum / 1000.) - (rebuf_penalty * curr_rebuffer_time) - (
-                            SMOOTH_PENALTY * smoothness_diffs / 1000.)
+                            smooth_penalty * smoothness_diffs / 1000.)
                 reward += parent[0]
 
                 children = parent[:]
@@ -314,7 +310,7 @@ def solving_log_true_bw(start_buffer, bit_rate, future_chunk_length, env):
                     break
                 # criterion terms
                 # theta = SMOOTH_PENALTY * (VIDEO_BIT_RATE[action+1]/1000. - VIDEO_BIT_RATE[action]/1000.)
-                if QOE_METRIC == 'log':
+                if qoe_metric == 'log':
                     rebuffer_term = rebuf_penalty * (
                                 max(download_time_next - parent[5], 0) - max(download_time - parent[5], 0))
                     if (action + 1 <= parent[-1]):
