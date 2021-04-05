@@ -17,8 +17,10 @@ LR_RATE = 1e-4
 DEFAULT_QUALITY = 1
 VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
 MODEL_TEST_INTERVAL = 10
-QOE_METRIC = 'lin'
-REBUF_PENALTY = 4.3
+QOE_METRIC = 'log'
+# REBUF_PENALTY = 2.66 #4.3
+REBUFF_PENALTY_LIN = 4.3
+REBUFF_PENALTY_LOG = 2.66
 SMOOTH_PENALTY = 1
 MPC_FUTURE_CHUNK_COUNT = 7
 
@@ -80,10 +82,23 @@ def loopmain(sess, actor):
             time_stamp += delay  # in ms
             time_stamp += sleep_time  # in ms
 
-            reward = VIDEO_BIT_RATE[bit_rate] / M_IN_K \
+            if QOE_METRIC == 'lin':
+            # -- lin scale reward --
+                REBUF_PENALTY = REBUFF_PENALTY_LIN
+                reward = VIDEO_BIT_RATE[bit_rate] / M_IN_K \
                         - REBUF_PENALTY * rebuf \
                         - SMOOTH_PENALTY * np.abs(VIDEO_BIT_RATE[bit_rate] -
                                                 VIDEO_BIT_RATE[last_bit_rate]) / M_IN_K
+                # reward_max = 4.3
+            else:
+            # -- log scale reward --
+                REBUF_PENALTY = REBUFF_PENALTY_LOG
+                log_bit_rate = np.log(VIDEO_BIT_RATE[bit_rate] / float(VIDEO_BIT_RATE[0]))
+                log_last_bit_rate = np.log(VIDEO_BIT_RATE[last_bit_rate] / float(VIDEO_BIT_RATE[0]))
+
+                reward = log_bit_rate \
+                        - REBUF_PENALTY * rebuf \
+                        - SMOOTH_PENALTY * np.abs(log_bit_rate - log_last_bit_rate)
 
             r_batch.append(reward)
 
