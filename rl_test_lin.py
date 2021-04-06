@@ -17,8 +17,10 @@ VIDEO_BIT_RATE = [300,750,1200,1850,2850,4300]  # Kbps
 BUFFER_NORM_FACTOR = 10.0
 CHUNK_TIL_VIDEO_END_CAP = 48.0
 M_IN_K = 1000.0
-REBUF_PENALTY = 4.3  # 1 sec rebuffering -> 3 Mbps
-SMOOTH_PENALTY = 1
+QOE_METRIC = 'log'
+# REBUF_PENALTY = 2.66 #4.3
+REBUFF_PENALTY_LIN = 4.3
+REBUFF_PENALTY_LOG = 2.66
 DEFAULT_QUALITY = 1  # default video quality without agent
 RANDOM_SEED = 42
 RAND_RANGE = 1000
@@ -79,10 +81,23 @@ def main():
             time_stamp += delay  # in ms
             time_stamp += sleep_time  # in ms
 
-            reward = VIDEO_BIT_RATE[bit_rate] / M_IN_K \
-                    - REBUF_PENALTY * rebuf \
-                    - SMOOTH_PENALTY * np.abs(VIDEO_BIT_RATE[bit_rate] -
-                                            VIDEO_BIT_RATE[last_bit_rate]) / M_IN_K
+            if QOE_METRIC == 'lin':
+            # -- lin scale reward --
+                REBUF_PENALTY = REBUFF_PENALTY_LIN
+                reward = VIDEO_BIT_RATE[bit_rate] / M_IN_K \
+                        - REBUF_PENALTY * rebuf \
+                        - SMOOTH_PENALTY * np.abs(VIDEO_BIT_RATE[bit_rate] -
+                                                VIDEO_BIT_RATE[last_bit_rate]) / M_IN_K
+                # reward_max = 4.3
+            else:
+            # -- log scale reward --
+                REBUF_PENALTY = REBUFF_PENALTY_LOG
+                log_bit_rate = np.log(VIDEO_BIT_RATE[bit_rate] / float(VIDEO_BIT_RATE[0]))
+                log_last_bit_rate = np.log(VIDEO_BIT_RATE[last_bit_rate] / float(VIDEO_BIT_RATE[0]))
+
+                reward = log_bit_rate \
+                        - REBUF_PENALTY * rebuf \
+                        - SMOOTH_PENALTY * np.abs(log_bit_rate - log_last_bit_rate)
             r_batch.append(reward)
             last_bit_rate = bit_rate
 
