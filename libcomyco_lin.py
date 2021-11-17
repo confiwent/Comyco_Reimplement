@@ -56,19 +56,19 @@ class libcomyco(object):
                 inputs[:, 3:4, :], FEATURE_NUM, 4, activation='relu')
             split_4 = tflearn.conv_1d(
                 inputs[:, 4:5, :self.A_DIM], FEATURE_NUM, 4, activation='relu')
-            # split_5 = tflearn.conv_1d(
-            #     inputs[:, 5:6, :self.A_DIM], FEATURE_NUM, 4, activation='relu')
-            split_5 = tflearn.fully_connected(
-                inputs[:, 5:6, -1], FEATURE_NUM, activation='relu')
+            split_5 = tflearn.conv_1d(
+                inputs[:, 5:6, :self.A_DIM], FEATURE_NUM, 4, activation='relu')
+            split_6 = tflearn.fully_connected(
+                inputs[:, 6:7, -1], FEATURE_NUM, activation='relu')
 
             split_2_flat = tflearn.flatten(split_2)
             split_3_flat = tflearn.flatten(split_3)
             split_4_flat = tflearn.flatten(split_4)
-            # split_5_flat = tflearn.flatten(split_5)
+            split_5_flat = tflearn.flatten(split_5)
 
             merge_net = tf.stack(
                 [split_0, split_1, split_2_flat,
-                 split_3_flat, split_4_flat, split_5], axis=-1)
+                 split_3_flat, split_4_flat, split_5_flat, split_6], axis=-1)
             # shuffle to fit gru layer
             merge_net = tf.transpose(merge_net, [0, 2, 1])
             dense_net_0 = tflearn.gru(
