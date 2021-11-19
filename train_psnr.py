@@ -151,17 +151,6 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
             log_file.flush()
 
             # report experience to the coordinator
-            if end_of_video:
-                del s_batch[:]
-                del a_batch[:]
-                del r_batch[:]
-                del a_real_batch[:]
-                #del d_batch[:]
-                del entropy_record[:]
-
-                # so that in the log we know where video ends
-                log_file.write('\n')
-
             # store the state and action into batches
             if end_of_video:
                 last_bit_rate = DEFAULT_QUALITY
@@ -186,6 +175,16 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
 
                 writer.add_summary(summary_str, epoch)
                 writer.flush()
+
+                del s_batch[:]
+                del a_batch[:]
+                del r_batch[:]
+                del a_real_batch[:]
+                del ce_loss[:]
+                del entropy_record[:]
+
+                # so that in the log we know where video ends
+                log_file.write('\n')
 
                 epoch += 1
                 if epoch % MODEL_TEST_INTERVAL == 0:
