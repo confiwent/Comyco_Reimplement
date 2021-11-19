@@ -153,6 +153,11 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
             # report experience to the coordinator
             # store the state and action into batches
             if end_of_video:
+                del s_batch[:]
+                del a_batch[:]
+                del r_batch[:]
+                del a_real_batch[:]
+                
                 last_bit_rate = DEFAULT_QUALITY
                 bit_rate = DEFAULT_QUALITY  # use the default action here
                 last_quality = np.log(VIDEO_BIT_RATE[last_bit_rate] / float(VIDEO_BIT_RATE[0]))
@@ -176,10 +181,6 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
                 writer.add_summary(summary_str, epoch)
                 writer.flush()
 
-                del s_batch[:]
-                del a_batch[:]
-                del r_batch[:]
-                del a_real_batch[:]
                 del ce_loss[:]
                 del entropy_record[:]
 
