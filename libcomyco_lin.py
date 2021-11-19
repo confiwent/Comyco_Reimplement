@@ -107,6 +107,7 @@ class libcomyco(object):
                 self.inputs: np.array(training_s_batch),
                 self.y_: np.array(training_a_batch)
             })
+        return training_s_batch, training_a_batch
 
     def save(self, filename):
         self.saver.save(self.sess, filename)
@@ -125,3 +126,14 @@ class libcomyco(object):
             if 0 < x[i] < 1:
                 H -= x[i] * np.log(x[i])
         return H
+
+def build_summaries():
+    ce_loss = tf.Variable(0.)
+    tf.summary.scalar("TD_loss", ce_loss)
+    avg_entropy = tf.Variable(0.)
+    tf.summary.scalar("Avg_entropy", avg_entropy)
+
+    summary_vars = [ce_loss, avg_entropy]
+    summary_ops = tf.summary.merge_all()
+
+    return summary_ops, summary_vars

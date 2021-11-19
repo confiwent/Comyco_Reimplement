@@ -39,7 +39,7 @@ parser.add_argument('--LasVegas', action='store_true', help='Use the video of La
 parser.add_argument('--Dubai', action='store_true', help='Use the video of Dubai')
 
 
-def loopmain(sess, actor, args):
+def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
     if args.Avengers:
         video = 'Avengers'
     elif args.LasVegas:
@@ -67,6 +67,7 @@ def loopmain(sess, actor, args):
         a_real_batch = [action_vec]
         r_batch = []
 
+        ce_loss = []
         entropy_record = []
         time_stamp = 0
         sess.run(tf.global_variables_initializer())
@@ -131,9 +132,12 @@ def loopmain(sess, actor, args):
             action_real_vec[action_real] = 1
             
             actor.submit(state, action_real_vec)
-            actor.train()
-
-            entropy_record.append(actor.compute_entropy(action_prob[0]))
+            batch_s, batch_a = actor.train()
+            if batch_s.shape[0] > 0:
+                loss = actor.loss(batch_s, batch_a)
+            ce_loss.append(loss)
+            entropy = actor.compute_entropy(action_prob[0])
+            entropy_record.append(entropy)
             # log time_stamp, bit_rate, buffer_size, reward
             log_file.write(str(time_stamp) + '\t' +
                            str(VIDEO_BIT_RATE[bit_rate]) + '\t' +
@@ -174,6 +178,14 @@ def loopmain(sess, actor, args):
                 s_batch.append(np.zeros((S_INFO, S_LEN)))
                 a_batch.append(action_vec)
                 a_real_batch.append(action_real_vec)
+
+                summary_str = sess.run(summary_ops, feed_dict={
+                    summary_vars[0] : np.mean(ce_loss),
+                    summary_vars[1] : np.mean(entropy_record)
+                })
+
+                writer.add_summary(summary_str, epoch)
+                writer.flush()
 
                 epoch += 1
                 if epoch % MODEL_TEST_INTERVAL == 0:
@@ -230,14 +242,18 @@ def main():
     # create result directory
     if not os.path.exists(LOG_FILE):
         os.makedirs(LOG_FILE)
+    os.system("rm " + LOG_FILE + "*")
     gpu_options = tf.GPUOptions(allow_growth=True)
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
     actor = libcomyco.libcomyco(sess,
             S_INFO=S_INFO, S_LEN=S_LEN, A_DIM=A_DIM,
             LR_RATE=LR_RATE)
+
+    summary_ops, summary_vars = libcomyco.build_summaries()
+    writer = tf.summary.FileWriter(LOG_FILE, sess.graph)  # training monitor
     # modify for single agent
-    loopmain(sess, actor, args)
+    loopmain(sess, actor, summary_ops, summary_vars, writer, args)
 
 
 if __name__ == '__main__':
