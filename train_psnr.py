@@ -135,7 +135,7 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
             batch_s, batch_a = actor.train()
             if batch_s.shape[0] > 0:
                 loss = actor.loss(batch_s, batch_a)
-            ce_loss.append(loss)
+                ce_loss.append(loss)
             entropy = actor.compute_entropy(action_prob[0])
             entropy_record.append(entropy)
             # log time_stamp, bit_rate, buffer_size, reward
