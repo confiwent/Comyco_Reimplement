@@ -1,0 +1,14 @@
+# Ignore Mac system files
+.DS_store
+
+# Ignore all pyc files
+*.pyc
+
+# Ignore results files
+results/*
+
+test_results/*
+
+envivo/*
+
+models/*

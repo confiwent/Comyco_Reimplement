@@ -157,7 +157,7 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
                 del a_batch[:]
                 del r_batch[:]
                 del a_real_batch[:]
-                
+
                 last_bit_rate = DEFAULT_QUALITY
                 bit_rate = DEFAULT_QUALITY  # use the default action here
                 last_quality = np.log(VIDEO_BIT_RATE[last_bit_rate] / float(VIDEO_BIT_RATE[0]))
@@ -208,7 +208,7 @@ def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
                                     reward.append(float(parse[-1]))
                                 except IndexError:
                                     break
-                        rewards.append(np.sum(reward[1:]))
+                        rewards.append(np.mean(reward[1:]))
 
                     rewards = np.array(rewards)
 
