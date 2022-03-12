@@ -25,7 +25,8 @@ DEFAULT_QUALITY = 1  # default video quality without agent
 RANDOM_SEED = 42
 RAND_RANGE = 1000
 LOG_FILE = './test_results/log_test_cmc'
-TEST_TRACES = './envivo/traces/pre_webget_1608/test_traces/'
+# TEST_TRACES = './envivo/traces/pre_webget_1608/test_traces/'
+TEST_TRACES = './envivo/traces/traces_oboe/'
 # NN_MODEL = sys.argv[1]
 NN_MODEL = './models/nn_model_ep_350.ckpt'
 
