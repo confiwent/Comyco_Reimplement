@@ -16,7 +16,7 @@ A_DIM = 6
 LR_RATE = 1e-4
 DEFAULT_QUALITY = 1
 VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
-MODEL_TEST_INTERVAL = 10
+MODEL_TEST_INTERVAL = 5#10
 REBUF_PENALTY = 8
 SMOOTH_PENALTY = 0.5
 MPC_FUTURE_CHUNK_COUNT = 7
@@ -26,10 +26,12 @@ BUFFER_NORM_FACTOR = 10.0
 DB_NORM_FACTOR = 25.0
 M_IN_K = 1000.0
 RAND_RANGE = 1000
-TRAIN_TRACES = './envivo/traces/pre_webget_1608/cooked_traces/' #_test
+# TRAIN_TRACES = './envivo/traces/pre_webget_1608/cooked_traces/' #_test fcc_noisy/cooked_traces/'
+TRAIN_TRACES = './envivo/traces/fcc_noisy/cooked_traces/'
 # TRAIN_TRACES = './cooked_test_traces/' #_test
 LOG_FILE = './results/'
 TEST_LOG_FOLDER = './test_results/'
+NN_MODEL = './models/nn_model_ep_350.ckpt'
 
 CHUNK_TIL_VIDEO_END_CAP = 149.0
 
@@ -37,6 +39,7 @@ parser = argparse.ArgumentParser(description='Comyco-Huang-JSAC20')
 parser.add_argument('--Avengers', action='store_true', help='Use the video of Avengers')
 parser.add_argument('--LasVegas', action='store_true', help='Use the video of LasVegas')
 parser.add_argument('--Dubai', action='store_true', help='Use the video of Dubai')
+parser.add_argument('--adapt', action='store_true', help='Adaptation to new environments')
 
 
 def loopmain(sess, actor, summary_ops, summary_vars, writer, args):
@@ -253,6 +256,13 @@ def main():
     summary_ops, summary_vars = libcomyco.build_summaries()
     writer = tf.summary.FileWriter(LOG_FILE, sess.graph)  # training monitor
     # modify for single agent
+
+    sess.run(tf.global_variables_initializer())
+    saver = tf.train.Saver()  # save neural net parameters
+    # restore neural net parameters
+    if NN_MODEL is not None and args.adapt:  # NN_MODEL is the path to file
+        saver.restore(sess, NN_MODEL)
+        print("Testing model restored.")
     loopmain(sess, actor, summary_ops, summary_vars, writer, args)
 
 
